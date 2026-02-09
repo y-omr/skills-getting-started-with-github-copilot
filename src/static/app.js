@@ -4,13 +4,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  let messageHideTimeoutId;
+
   function showMessage(text, type) {
     messageDiv.textContent = text;
     messageDiv.className = `message ${type}`;
     messageDiv.classList.remove("hidden");
 
-    setTimeout(() => {
+    if (messageHideTimeoutId) {
+      clearTimeout(messageHideTimeoutId);
+    }
+
+    messageHideTimeoutId = setTimeout(() => {
       messageDiv.classList.add("hidden");
+      messageHideTimeoutId = undefined;
     }, 5000);
   }
 
@@ -31,42 +38,83 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
-        const participantsList = details.participants.length
-          ? details.participants
-              .map(
-                (participant) => `
-                  <li class="participant-item">
-                    <span class="participant-email">${participant}</span>
-                    <button
-                      type="button"
-                      class="participant-remove"
-                      data-activity="${encodeURIComponent(name)}"
-                      data-email="${encodeURIComponent(participant)}"
-                      aria-label="Remove ${participant} from ${name}"
-                      title="Remove participant"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM6 9h2v9H6V9z" />
-                      </svg>
-                    </button>
-                  </li>
-                `
-              )
-              .join("")
-          : '<li class="participants-empty">No participants yet</li>';
+        // Create participants list
+        const participantsList = document.createElement("ul");
+        participantsList.className = "participants-list";
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <div class="participants">
-            <p><strong>Participants:</strong></p>
-            <ul class="participants-list">
-              ${participantsList}
-            </ul>
-          </div>
-        `;
+        if (details.participants.length) {
+          details.participants.forEach((participant) => {
+            const li = document.createElement("li");
+            li.className = "participant-item";
+
+            const span = document.createElement("span");
+            span.className = "participant-email";
+            span.textContent = participant;
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "participant-remove";
+            button.setAttribute("data-activity", name);
+            button.setAttribute("data-email", participant);
+            button.setAttribute("aria-label", `Remove ${participant} from ${name}`);
+            button.title = "Remove participant";
+
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("aria-hidden", "true");
+            svg.setAttribute("focusable", "false");
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", "M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM6 9h2v9H6V9z");
+
+            svg.appendChild(path);
+            button.appendChild(svg);
+            li.appendChild(span);
+            li.appendChild(button);
+            participantsList.appendChild(li);
+          });
+        } else {
+          const li = document.createElement("li");
+          li.className = "participants-empty";
+          li.textContent = "No participants yet";
+          participantsList.appendChild(li);
+        }
+
+        // Create activity card content
+        const h4 = document.createElement("h4");
+        h4.textContent = name;
+
+        const descP = document.createElement("p");
+        descP.textContent = details.description;
+
+        const schedP = document.createElement("p");
+        const schedStrong = document.createElement("strong");
+        schedStrong.textContent = "Schedule:";
+        schedP.appendChild(schedStrong);
+        schedP.appendChild(document.createTextNode(" " + details.schedule));
+
+        const availP = document.createElement("p");
+        const availStrong = document.createElement("strong");
+        availStrong.textContent = "Availability:";
+        availP.appendChild(availStrong);
+        availP.appendChild(document.createTextNode(" " + spotsLeft + " spots left"));
+
+        const participantsDiv = document.createElement("div");
+        participantsDiv.className = "participants";
+
+        const participantsLabel = document.createElement("p");
+        const participantsStrong = document.createElement("strong");
+        participantsStrong.textContent = "Participants:";
+        participantsLabel.appendChild(participantsStrong);
+
+        participantsDiv.appendChild(participantsLabel);
+        participantsDiv.appendChild(participantsList);
+
+        activityCard.appendChild(h4);
+        activityCard.appendChild(descP);
+        activityCard.appendChild(schedP);
+        activityCard.appendChild(availP);
+        activityCard.appendChild(participantsDiv);
 
         activitiesList.appendChild(activityCard);
 

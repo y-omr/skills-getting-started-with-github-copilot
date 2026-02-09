@@ -87,3 +87,36 @@ def test_unregister_missing_student(client):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Student not found in this activity"
+
+
+def test_unregister_missing_activity(client):
+    response = client.delete(
+        "/activities/Science Club/signup",
+        params={"email": "student@mergington.edu"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Activity not found"
+
+
+def test_signup_rejects_when_activity_full(client):
+    # Fill up Math Olympiad (max 12 participants)
+    for i in range(12):
+        activities["Math Olympiad"]["participants"].append(f"student{i}@mergington.edu")
+
+    response = client.post(
+        "/activities/Math Olympiad/signup",
+        params={"email": "newstudent@mergington.edu"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Activity is full"
+
+
+def test_signup_rejects_invalid_email(client):
+    response = client.post(
+        "/activities/Art Club/signup",
+        params={"email": "invalid-email"},
+    )
+
+    assert response.status_code == 422  # Pydantic validation error

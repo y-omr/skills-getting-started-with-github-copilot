@@ -8,6 +8,7 @@ for extracurricular activities at Mergington High School.
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, EmailStr, ValidationError
 import os
 from pathlib import Path
 
@@ -18,6 +19,11 @@ app = FastAPI(title="Mergington High School API",
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
+
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+
 
 # In-memory activity database
 activities = {
@@ -89,19 +95,23 @@ def get_activities():
 
 
 @app.post("/activities/{activity_name}/signup")
-def signup_for_activity(activity_name: str, email: str):
+def signup_for_activity(activity_name: str, email: EmailStr):
     """Sign up a student for an activity"""
-    # Validate student is not already signed up
-    for activity in activities.values():
-        if email in activity["participants"]:
-            raise HTTPException(status_code=400, detail="Student already signed up for an activity")
-    
     # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
 
     # Get the specific activity
     activity = activities[activity_name]
+    
+    # Validate student is not already signed up
+    for act in activities.values():
+        if email in act["participants"]:
+            raise HTTPException(status_code=400, detail="Student already signed up for an activity")
+    
+    # Check capacity
+    if len(activity["participants"]) >= activity["max_participants"]:
+        raise HTTPException(status_code=400, detail="Activity is full")
 
     # Add student
     activity["participants"].append(email)
@@ -109,7 +119,7 @@ def signup_for_activity(activity_name: str, email: str):
 
 
 @app.delete("/activities/{activity_name}/signup")
-def unregister_from_activity(activity_name: str, email: str):
+def unregister_from_activity(activity_name: str, email: EmailStr):
     """Remove a student from an activity"""
     # Validate activity exists
     if activity_name not in activities:
