@@ -109,6 +109,7 @@ section h3 {
   justify-content: center;
   width: 28px;
   height: 28px;
+  padding: 0;
   border: 1px solid #d7d7d7;
   border-radius: 6px;
   background: #fff;
