@@ -56,8 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
             button.className = "participant-remove";
             button.setAttribute("data-activity", name);
             button.setAttribute("data-email", participant);
-            button.setAttribute("aria-label", `Remove ${participant} from ${name}`);
-            button.title = "Remove participant";
+            button.setAttribute("aria-label", "Remove " + participant + " from " + name);
+            button.setAttribute("title", "Remove participant");
 
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute("viewBox", "0 0 24 24");
